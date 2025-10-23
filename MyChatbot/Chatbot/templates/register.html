@@ -1,9 +1,93 @@
-<form method="POST">
-    {% csrf_token %}
-    <input type="text" name="username" placeholder="Username" required><br>
-    <input type="email" name="email" placeholder="Email" required><br>
-    <input type="password" name="password" placeholder="Password" required><br>
-    <button type="submit">Register</button>
-    <p>Already have an account? <a href="{% url 'login' %}">Login here</a></p>
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
 
-</form>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+</head>
+
+<body>
+    <div class="background-effects">
+        <div class="glow-orb glow-orb-1"></div>
+        <div class="glow-orb glow-orb-2"></div>
+        <div class="glow-orb glow-orb-3"></div>
+    </div>
+
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo-icon">✨</div>
+                <h2>Create Account</h2>
+                <p>Join the chatbot community</p>
+            </div>
+
+            <form method="POST" action="{% url 'register' %}">
+                {% csrf_token %}
+
+                <div class="input-wrapper">
+                    <input type="text" name="username" required>
+                    <label>Username</label>
+                    <span class="input-line"></span>
+                </div>
+
+                <div class="input-wrapper">
+                    <input type="email" name="email" required>
+                    <label>Email</label>
+                    <span class="input-line"></span>
+                </div>
+
+                <div class="input-wrapper">
+                    <input type="password" name="password" id="password" required>
+                    <label>Password</label>
+                    <button type="button" class="password-toggle" onclick="togglePassword()">
+                        <span class="toggle-icon"></span>
+                    </button>
+                    <span class="input-line"></span>
+                </div>
+
+                <div class="input-wrapper">
+                    <input type="password" name="confirm_password" id="confirm_password" required>
+                    <label>Confirm Password</label>
+                    <span class="input-line"></span>
+                </div>
+
+                <button type="submit" class="login-btn">
+                    <span class="btn-text">Register</span>
+                    <div class="btn-glow"></div>
+                    <div class="btn-loader"></div>
+                </button>
+
+                <div class="divider"><span>or</span></div>
+
+                <div class="social-login">
+                    <button class="social-btn">
+                        <span class="social-icon google-icon"></span>
+                        Continue with Google
+                    </button>
+                    <button class="social-btn">
+                        <span class="social-icon apple-icon"></span>
+                        Continue with Apple
+                    </button>
+                </div>
+
+                <div class="signup-link">
+                    <p>Already have an account? <a href="{% url 'login' %}">Login</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword() {
+            const input = document.getElementById("password");
+            const confirm = document.getElementById("confirm_password");
+            const type = input.type === "password" ? "text" : "password";
+            input.type = confirm.type = type;
+        }
+    </script>
+</body>
+
+</html>

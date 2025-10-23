@@ -1,0 +1,6 @@
+{
+    "python.defaultInterpreterPath": "C:\\Users\\ghazi\\Documents\\GitHub\\API_CHATBOT\\MyChatbot\\venv\\Scripts\\python.exe",
+    "python.analysis.extraPaths": [
+        "C:\\Users\\ghazi\\Documents\\GitHub\\API_CHATBOT\\MyChatbot"
+    ]
+}

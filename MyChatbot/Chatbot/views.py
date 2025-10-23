@@ -1,88 +1,140 @@
-from django.shortcuts import render
-from django.http import JsonResponse
-from .models import ChatHistory
-from django.contrib.auth.decorators import login_required
-import requests, os
 from django.shortcuts import render, redirect
+from django.http import JsonResponse
 from django.contrib.auth.models import User
-from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
-from django.core.mail import EmailMessage
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes, force_str
-from django.template.loader import render_to_string
-from django.contrib.sites.shortcuts import get_current_site
-from django.contrib.auth.tokens import default_token_generator
-from .models import Profile
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.core.mail import send_mail
+from .models import Profile, ChatHistory
+import os, requests, random
 
+# ---------------------- REGISTER ----------------------
 def register(request):
-    if request.method == "POST":
-        username = request.POST['username']
-        email = request.POST['email']
-        password = request.POST['password']
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        email = request.POST.get('email')
+        password = request.POST.get('password')
 
-        if User.objects.filter(username=username).exists():
-            messages.error(request, "Username already exists")
+        if User.objects.filter(email=email).exists():
+            messages.error(request, "Email already registered")
             return redirect('register')
 
         user = User.objects.create_user(username=username, email=email, password=password)
-        user.is_active = False
-        user.save()
-        Profile.objects.create(user=user)
+        code = str(random.randint(100000, 999999))
+        user.profile.verification_code = code
+        user.profile.save()
 
-        token = default_token_generator.make_token(user)
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        domain = get_current_site(request).domain
-        link = f"http://{domain}/verify/{uid}/{token}/"
-        email_subject = "Verify your email"
-        message = render_to_string("verify_email.html", {"link": link, "user": user})
-        EmailMessage(email_subject, message, to=[email]).send()
+        send_mail(
+            'Your Verification Code',
+            f'Your verification code is {code}',
+            'your_email@gmail.com',
+            [email],
+            fail_silently=False,
+        )
+        request.session['email'] = email
+        messages.info(request, "Verification code sent to your email.")
+        return redirect('verify_email')
 
-        messages.success(request, "Verification email sent!")
-        return redirect('login')
+    return render(request, 'register.html')
 
-    return render(request, "register.html")
+# ---------------------- VERIFY EMAIL ----------------------
+def verify_email(request):
+    if request.method == 'POST':
+        code = request.POST.get('code')
+        email = request.session.get('email')
+        profile = Profile.objects.get(user__email=email)
 
-def verify_email(request, uidb64, token):
-    try:
-        uid = force_str(urlsafe_base64_decode(uidb64))
-        user = User.objects.get(pk=uid)
-    except:
-        user = None
-
-    if user and default_token_generator.check_token(user, token):
-        user.is_active = True
-        user.save()
-        Profile.objects.filter(user=user).update(is_verified=True)
-        messages.success(request, "Email verified! You can now log in.")
-        return redirect('login')
-    else:
-        messages.error(request, "Invalid verification link.")
-        return redirect('register')
-
-def login_user(request):
-    if request.method == "POST":
-        username = request.POST['username']
-        password = request.POST['password']
-        user = authenticate(username=username, password=password)
-        if user is not None:
-            if user.is_active:
-                login(request, user)
-                return redirect('chat_page')
-            else:
-                messages.error(request, "Verify your email first.")
+        if profile.verification_code == code:
+            profile.is_verified = True
+            profile.save()
+            messages.success(request, "Email verified successfully! You can now log in.")
+            return redirect('login')
         else:
-            messages.error(request, "Invalid credentials.")
-    return render(request, "login.html")
+            messages.error(request, "Invalid verification code")
 
+    return render(request, 'verify.html')
+
+# ---------------------- LOGIN ----------------------
+def login_user(request):
+    if request.method == 'POST':
+        username_or_email = request.POST.get('username')
+        password = request.POST.get('password')
+
+        user = authenticate(request, username=username_or_email, password=password)
+        if user is None:
+            try:
+                user_obj = User.objects.get(email=username_or_email)
+                user = authenticate(request, username=user_obj.username, password=password)
+            except User.DoesNotExist:
+                user = None
+
+        if user is not None:
+            if user.profile.is_verified:
+                login(request, user)
+                if not request.POST.get('remember_me'):
+                    request.session.set_expiry(0)
+                return redirect('chat')
+            else:
+                messages.error(request, "Please verify your email before logging in.")
+                return redirect('verify_email')
+        else:
+            messages.error(request, "Invalid username/email or password")
+            return redirect('login')
+
+    return render(request, 'login.html')
+
+# ---------------------- LOGOUT ----------------------
 def logout_user(request):
     logout(request)
     return redirect('login')
 
+# ---------------------- FORGOT PASSWORD ----------------------
+def forgot_password(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        try:
+            user = User.objects.get(email=email)
+            code = str(random.randint(100000, 999999))
+            request.session['reset_email'] = email
+            request.session['reset_code'] = code
+
+            send_mail(
+                'Password Reset Code',
+                f'Your verification code is {code}',
+                'your_email@gmail.com',
+                [email],
+                fail_silently=False,
+            )
+            messages.info(request, 'Verification code sent to your email.')
+            return redirect('reset_password')
+        except User.DoesNotExist:
+            messages.error(request, 'Email not found.')
+    return render(request, 'forgot_password.html')
+
+# ---------------------- RESET PASSWORD ----------------------
+def reset_password(request):
+    if request.method == 'POST':
+        code = request.POST.get('code')
+        new_pass = request.POST.get('new_password')
+        email = request.session.get('reset_email')
+        stored_code = request.session.get('reset_code')
+
+        if code == stored_code and email:
+            user = User.objects.get(email=email)
+            user.set_password(new_pass)
+            user.save()
+            messages.success(request, 'Password reset successful. You can now log in.')
+            return redirect('login')
+        else:
+            messages.error(request, 'Invalid code or session expired.')
+    return render(request, 'reset_password.html')
+
+# ---------------------- CHAT PAGE ----------------------
 @login_required
 def chat_page(request):
-    return render(request, "chat.html")
+    return render(request, 'chat.html')
 
+# ---------------------- SEND MESSAGE ----------------------
 @login_required
 def send_message(request):
     if request.method == "POST":

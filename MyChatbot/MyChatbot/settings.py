@@ -132,7 +132,8 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'wasamjaffri@gmail.com'
-EMAIL_HOST_PASSWORD = 'dgtndiicgmtuvqpi'  # not your Gmail password
+EMAIL_HOST_PASSWORD = 'sznouozcmxfxyzso'  # not your Gmail password
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
