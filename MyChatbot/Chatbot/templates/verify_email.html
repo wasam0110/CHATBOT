@@ -1,3 +1,78 @@
-<p>Hello {{ user.username }},</p>
-<p>Click the link below to verify your email:</p>
-<a href="{{ link }}">Verify Email</a>
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Email Verification</title>
+    <style>
+        body {
+            background-color: #f4f6f9;
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .email-container {
+            max-width: 500px;
+            margin: 40px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            text-align: center;
+        }
+
+        .email-header {
+            font-size: 22px;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .email-body {
+            font-size: 16px;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .verify-btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+
+        .verify-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .footer {
+            margin-top: 25px;
+            font-size: 13px;
+            color: #888;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="email-container">
+        <div class="email-header">Email Verification</div>
+        <div class="email-body">
+            <p>Hello <strong>{{ user.username }}</strong>,</p>
+            <p>Thank you for registering! Please verify your email address by clicking the button below.</p>
+            <a href="{{ link }}" class="verify-btn">Verify Email</a>
+            <p>If the button doesn't work, you can also copy and paste the link below into your browser:</p>
+            <p><a href="{{ link }}">{{ link }}</a></p>
+        </div>
+        <div class="footer">
+            © {{ year }} MyChatbot | All rights reserved.
+        </div>
+    </div>
+</body>
+
+</html>

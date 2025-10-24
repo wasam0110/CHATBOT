@@ -6,86 +6,213 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
-    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(145deg, #0a0a0a, #111);
+            color: #e0e0e0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .auth-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            z-index: 2;
+        }
+
+        .auth-box {
+            background: rgba(30, 30, 30, 0.8);
+            padding: 40px;
+            border-radius: 18px;
+            border: 1px solid rgba(192, 192, 192, 0.2);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 0 25px rgba(0, 255, 136, 0.15);
+            animation: fadeIn 0.7s ease-in-out;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #00ff88;
+            letter-spacing: 1px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #c0c0c0;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 18px;
+            border: 1px solid #333;
+            border-radius: 10px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: #00ff88;
+            box-shadow: 0 0 6px #00ff88;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(90deg, #00ff88, #00cc77);
+            color: #0a0a0a;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            transform: scale(1.03);
+            background: linear-gradient(90deg, #00cc77, #00ff88);
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+        }
+
+        p {
+            text-align: center;
+            margin-top: 12px;
+            color: #a0a0a0;
+        }
+
+        a {
+            color: #00ff88;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .background-effects {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .glow-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.4;
+            animation: float 10s ease-in-out infinite alternate;
+        }
+
+        .glow-orb-1 {
+            width: 280px;
+            height: 280px;
+            background: #00ff88;
+            top: -50px;
+            left: -80px;
+        }
+
+        .glow-orb-2 {
+            width: 250px;
+            height: 250px;
+            background: silver;
+            bottom: -60px;
+            right: -60px;
+        }
+
+        @keyframes float {
+            from {
+                transform: translateY(0px);
+            }
+
+            to {
+                transform: translateY(30px);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .show-pass {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .show-pass input {
+            width: auto;
+            margin-right: 5px;
+        }
+    </style>
 </head>
 
 <body>
     <div class="background-effects">
         <div class="glow-orb glow-orb-1"></div>
         <div class="glow-orb glow-orb-2"></div>
-        <div class="glow-orb glow-orb-3"></div>
     </div>
 
-    <div class="login-container">
-        <div class="login-card">
-            <div class="login-header">
-                <div class="logo-icon">✨</div>
-                <h2>Create Account</h2>
-                <p>Join the chatbot community</p>
-            </div>
+    <div class="auth-container">
+        <div class="auth-box">
+            <h2>Create Account</h2>
 
             <form method="POST" action="{% url 'register' %}">
                 {% csrf_token %}
 
-                <div class="input-wrapper">
-                    <input type="text" name="username" required>
-                    <label>Username</label>
-                    <span class="input-line"></span>
+                <label for="username">Username</label>
+                <input type="text" name="username" placeholder="Enter username" required>
+
+                <label for="email">Email</label>
+                <input type="email" name="email" placeholder="Enter email" required>
+
+                <label for="password1">Password</label>
+                <input type="password" id="password1" name="password1" placeholder="Enter password" required>
+
+                <label for="password2">Confirm Password</label>
+                <input type="password" id="password2" name="password2" placeholder="Confirm password" required>
+
+                <div class="show-pass">
+                    <input type="checkbox" onclick="togglePasswords()"> Show passwords
                 </div>
 
-                <div class="input-wrapper">
-                    <input type="email" name="email" required>
-                    <label>Email</label>
-                    <span class="input-line"></span>
-                </div>
+                <button type="submit">Register</button>
 
-                <div class="input-wrapper">
-                    <input type="password" name="password" id="password" required>
-                    <label>Password</label>
-                    <button type="button" class="password-toggle" onclick="togglePassword()">
-                        <span class="toggle-icon"></span>
-                    </button>
-                    <span class="input-line"></span>
-                </div>
-
-                <div class="input-wrapper">
-                    <input type="password" name="confirm_password" id="confirm_password" required>
-                    <label>Confirm Password</label>
-                    <span class="input-line"></span>
-                </div>
-
-                <button type="submit" class="login-btn">
-                    <span class="btn-text">Register</span>
-                    <div class="btn-glow"></div>
-                    <div class="btn-loader"></div>
-                </button>
-
-                <div class="divider"><span>or</span></div>
-
-                <div class="social-login">
-                    <button class="social-btn">
-                        <span class="social-icon google-icon"></span>
-                        Continue with Google
-                    </button>
-                    <button class="social-btn">
-                        <span class="social-icon apple-icon"></span>
-                        Continue with Apple
-                    </button>
-                </div>
-
-                <div class="signup-link">
-                    <p>Already have an account? <a href="{% url 'login' %}">Login</a></p>
-                </div>
+                <p>Already have an account? <a href="{% url 'login' %}">Login</a></p>
             </form>
         </div>
     </div>
 
     <script>
-        function togglePassword() {
-            const input = document.getElementById("password");
-            const confirm = document.getElementById("confirm_password");
-            const type = input.type === "password" ? "text" : "password";
-            input.type = confirm.type = type;
+        function togglePasswords() {
+            const p1 = document.getElementById('password1');
+            const p2 = document.getElementById('password2');
+            const type = p1.type === 'password' ? 'text' : 'password';
+            p1.type = type;
+            p2.type = type;
         }
     </script>
 </body>

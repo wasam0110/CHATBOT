@@ -13,5 +13,8 @@ path('reset_password/', views.reset_password, name='reset_password'),
 path('chat/', views.chat_page, name='chat'),
 path('send_message/', views.send_message, name='send_message'),
 path('', lambda request: redirect('login')),
+    path('get_response/', views.get_response, name='get_response'),
+        path('get_response/', views.get_response, name='get_response'),
+path('saved_chats/', views.saved_chats, name='saved_chats'),
 
 ]

@@ -1,0 +1,194 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chatbot</title>
+    <link rel="stylesheet" href="{% static 'css/chat.css' %}">
+</head>
+
+<body>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>MyChat</h2>
+            <button class="close-btn" id="closeSidebar">×</button>
+        </div>
+        <ul class="sidebar-menu">
+            <li><button id="newChat">+ New Chat</button></li>
+            <li><a href="#">Saved Chats</a></li>
+        </ul>
+    </div>
+
+    <button class="open-btn" id="openSidebar">☰</button>
+
+    <div class="main-content" id="mainContent">
+        <div class="navbar">
+            <h1>AI Chatbot</h1>
+            <div class="profile">
+                <img src="https://api.dicebear.com/7.x/initials/svg?seed={{ user.email }}" alt="Profile"
+                    class="profile-pic" id="profilePic">
+                <div class="dropdown" id="profileDropdown">
+                    <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-box" id="chatBox"></div>
+
+        <div class="input-area">
+            <input type="file" id="fileInput" hidden>
+            <button id="fileBtn">📎</button>
+            <button id="voiceBtn">🎙️</button>
+            <input type="text" id="userInput" placeholder="Type your message...">
+            <button id="sendBtn">➤</button>
+        </div>
+    </div>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const openSidebar = document.getElementById('openSidebar');
+        const closeSidebar = document.getElementById('closeSidebar');
+        const mainContent = document.getElementById('mainContent');
+        const profilePic = document.getElementById('profilePic');
+        const profileDropdown = document.getElementById('profileDropdown');
+        const fileBtn = document.getElementById('fileBtn');
+        const fileInput = document.getElementById('fileInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const userInput = document.getElementById('userInput');
+        const chatBox = document.getElementById('chatBox');
+        const voiceBtn = document.getElementById('voiceBtn');
+
+        // CSRF token fetch
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+
+        // Sidebar toggle
+        openSidebar.onclick = () => {
+            sidebar.classList.add('open');
+            mainContent.classList.add('shifted');
+            openSidebar.style.display = "none";
+        };
+        closeSidebar.onclick = () => {
+            sidebar.classList.remove('open');
+            mainContent.classList.remove('shifted');
+            openSidebar.style.display = "block";
+        };
+
+        // Profile dropdown toggle
+        profilePic.onclick = () => profileDropdown.classList.toggle('show');
+
+        // File upload handler
+        fileBtn.onclick = () => fileInput.click();
+        fileInput.onchange = () => {
+            const file = fileInput.files[0];
+            if (file) appendMessage(`📄 Sent: ${file.name}`, 'user');
+        };
+
+        // Send message
+        sendBtn.onclick = sendMessage;
+        userInput.addEventListener("keypress", e => { if (e.key === "Enter") sendMessage(); });
+
+        function appendMessage(msg, sender) {
+            const div = document.createElement("div");
+            div.classList.add("message", sender);
+            div.innerText = msg;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function sendMessage() {
+            const msg = userInput.value.trim();
+            if (!msg) return;
+            appendMessage(msg, "user");
+            userInput.value = "";
+
+            fetch('/get_response/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrftoken
+                },
+                body: new URLSearchParams({ 'message': msg })
+            })
+                .then(response => response.json())
+                .then(data => appendMessage(data.response, "bot"))
+                .catch(() => appendMessage("⚠️ Error connecting to server", "bot"));
+        }
+
+        // Voice input
+        voiceBtn.onclick = () => {
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = "en-US";
+            recognition.onresult = e => {
+                const text = e.results[0][0].transcript;
+                userInput.value = text;
+                sendMessage();
+            };
+            recognition.start();
+        };
+        // --- New Chat Button ---
+        document.getElementById('newChat').onclick = () => {
+            chatBox.innerHTML = "";  // Clear current chat
+            appendMessage("🆕 New chat started.", "bot");
+        };
+
+        // --- Saved Chats Button ---
+        document.querySelector('.sidebar-menu a').onclick = (e) => {
+            e.preventDefault();
+            fetch('/saved_chats/')
+                .then(res => res.json())
+                .then(data => {
+                    chatBox.innerHTML = ""; // Clear chat box
+                    if (data.chats.length === 0) {
+                        appendMessage("No saved chats found.", "bot");
+                    } else {
+                        data.chats.forEach(chat => {
+                            appendMessage(`💬 ${chat.message}`, "user");
+                            appendMessage(`🤖 ${chat.response}`, "bot");
+                        });
+                    }
+                })
+                .catch(() => appendMessage("Error loading saved chats.", "bot"));
+        };
+        function loadSavedChats() {
+            fetch("/get_saved_chats/")
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        alert("Error: " + data.error);
+                        return;
+                    }
+                    const savedChatsContainer = document.getElementById("saved-chats");
+                    savedChatsContainer.innerHTML = "";
+                    data.chats.forEach(chat => {
+                        const chatItem = document.createElement("div");
+                        chatItem.classList.add("chat-item");
+                        chatItem.innerHTML = `
+          <p><strong>You:</strong> ${chat.user_message}</p>
+          <p><strong>Bot:</strong> ${chat.bot_reply}</p>
+        `;
+                        savedChatsContainer.appendChild(chatItem);
+                    });
+                })
+                .catch(err => alert("Error loading saved chats: " + err));
+        }
+
+    </script>
+</body>
+
+</html>

@@ -11,11 +11,11 @@ class Profile(models.Model):
 class ChatHistory(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     user_message = models.TextField()
-    bot_reply = models.TextField()
+    bot_response = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user.username} - {self.timestamp}"
+        return f"{self.user.username}: {self.user_message[:30]}"
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User

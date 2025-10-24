@@ -1,5 +1,4 @@
 from django.shortcuts import render, redirect
-from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -7,7 +6,11 @@ from django.contrib import messages
 from django.core.mail import send_mail
 from .models import Profile, ChatHistory
 import os, requests, random
-
+from django.http import JsonResponse
+from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
+import json
+import os
 # ---------------------- REGISTER ----------------------
 def register(request):
     if request.method == 'POST':
@@ -134,6 +137,84 @@ def reset_password(request):
 def chat_page(request):
     return render(request, 'chat.html')
 
+import requests
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
+
+@csrf_exempt
+@login_required
+def get_response(request):
+    if request.method == "POST":
+        user_message = request.POST.get("message", "")
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {settings.GROQ_API_KEY}"
+        }
+
+        data = {
+            "model": "llama-3.3-70b-versatile",
+            "messages": [
+                {"role": "system", "content": "Explain everything simply and clearly like a teacher."},
+                {"role": "user", "content": user_message}
+            ]
+        }
+
+        try:
+            response = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers=headers,
+                data=json.dumps(data)
+            )
+            response_data = response.json()
+
+            bot_response = response_data["choices"][0]["message"]["content"]
+
+            # ✅ Save chat to database
+            ChatHistory.objects.create(
+                user=request.user,
+                user_message=user_message,
+                bot_response=bot_response
+            )
+
+            return JsonResponse({"response": bot_response})
+
+        except Exception as e:
+            return JsonResponse({"error": str(e)})
+
+    return JsonResponse({"error": "Invalid request"})
+
+@login_required
+def saved_chats(request):
+    chats = ChatHistory.objects.filter(user=request.user).order_by('-timestamp')
+    chat_list = []
+    for chat in chats:
+        chat_list.append({
+            "id": chat.id,
+            "user_message": chat.user_message,
+            "bot_response": chat.bot_response,
+            "timestamp": chat.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+        })
+    return JsonResponse({"chats": chat_list})
+
+@login_required
+def get_saved_chats(request):
+    try:
+        chats = ChatHistory.objects.filter(user=request.user).order_by('-timestamp')
+        chat_data = [
+            {
+                "id": chat.id,
+                "user_message": chat.user_message,
+                "bot_reply": chat.bot_reply,
+                "timestamp": chat.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            }
+            for chat in chats
+        ]
+        return JsonResponse({"chats": chat_data})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+    
 # ---------------------- SEND MESSAGE ----------------------
 @login_required
 def send_message(request):
