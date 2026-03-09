@@ -5,24 +5,34 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.mail import send_mail
 from .models import Profile, ChatHistory
-import os, requests, random
 from django.http import JsonResponse
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
-import json
 import os
+import json
+import random
+import requests
 # ---------------------- REGISTER ----------------------
 def register(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         email = request.POST.get('email')
-        password = request.POST.get('password')
+        password1 = request.POST.get('password1')
+        password2 = request.POST.get('password2')
+
+        if password1 != password2:
+            messages.error(request, "Passwords do not match")
+            return redirect('register')
+
+        if User.objects.filter(username=username).exists():
+            messages.error(request, "Username already taken")
+            return redirect('register')
 
         if User.objects.filter(email=email).exists():
             messages.error(request, "Email already registered")
             return redirect('register')
 
-        user = User.objects.create_user(username=username, email=email, password=password)
+        user = User.objects.create_user(username=username, email=email, password=password1)
         code = str(random.randint(100000, 999999))
         user.profile.verification_code = code
         user.profile.save()
@@ -30,7 +40,7 @@ def register(request):
         send_mail(
             'Your Verification Code',
             f'Your verification code is {code}',
-            'your_email@gmail.com',
+            settings.DEFAULT_FROM_EMAIL,
             [email],
             fail_silently=False,
         )
@@ -104,7 +114,7 @@ def forgot_password(request):
             send_mail(
                 'Password Reset Code',
                 f'Your verification code is {code}',
-                'your_email@gmail.com',
+                settings.DEFAULT_FROM_EMAIL,
                 [email],
                 fail_silently=False,
             )
@@ -137,12 +147,7 @@ def reset_password(request):
 def chat_page(request):
     return render(request, 'chat.html')
 
-import requests
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.conf import settings
 
-@csrf_exempt
 @login_required
 def get_response(request):
     if request.method == "POST":

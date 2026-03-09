@@ -1,194 +1,268 @@
-{% load static %}
-<!DOCTYPE html>
+﻿{% load static %}
+<!doctype html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chatbot</title>
-    <link rel="stylesheet" href="{% static 'css/chat.css' %}">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <link rel="stylesheet" href="{% static 'css/chat.css' %}">
 </head>
-
 <body>
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <h2>MyChat</h2>
-            <button class="close-btn" id="closeSidebar">×</button>
-        </div>
-        <ul class="sidebar-menu">
-            <li><button id="newChat">+ New Chat</button></li>
-            <li><a href="#">Saved Chats</a></li>
-        </ul>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-brand">
+      <div class="brand-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="8.5" cy="16" r="1.5" fill="currentColor"/><circle cx="15.5" cy="16" r="1.5" fill="currentColor"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><path d="M12 7v4"/></svg>
+      </div>
+      AI Chat
     </div>
+    <button class="close-btn" id="closeSidebar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="sidebar-body">
+    <button id="newChatBtn" class="new-chat-btn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      New Chat
+    </button>
+    <button id="savedChatsBtn" class="sidebar-nav-btn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Saved Chats
+    </button>
+  </div>
+</aside>
 
-    <button class="open-btn" id="openSidebar">☰</button>
+<button class="open-btn" id="openSidebar">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+</button>
 
-    <div class="main-content" id="mainContent">
-        <div class="navbar">
-            <h1>AI Chatbot</h1>
-            <div class="profile">
-                <img src="https://api.dicebear.com/7.x/initials/svg?seed={{ user.email }}" alt="Profile"
-                    class="profile-pic" id="profilePic">
-                <div class="dropdown" id="profileDropdown">
-                    <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
-                </div>
-            </div>
-        </div>
-
-        <div class="chat-box" id="chatBox"></div>
-
-        <div class="input-area">
-            <input type="file" id="fileInput" hidden>
-            <button id="fileBtn">📎</button>
-            <button id="voiceBtn">🎙️</button>
-            <input type="text" id="userInput" placeholder="Type your message...">
-            <button id="sendBtn">➤</button>
-        </div>
+<!-- MAIN -->
+<main class="main-content" id="mainContent">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="8.5" cy="16" r="1.5" fill="currentColor"/><circle cx="15.5" cy="16" r="1.5" fill="currentColor"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      <h1>AI <span>Chat</span></h1>
     </div>
+    <div class="profile">
+      <button class="profile-btn" id="profileBtn">
+        <img src="https://api.dicebear.com/7.x/initials/svg?seed={{ user.username }}&backgroundColor=0d1210&textColor=79b891" alt="{{ user.username }}" class="profile-pic">
+        <span class="profile-name">{{ user.username }}</span>
+        <svg class="profile-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="dropdown" id="profileDropdown">
+        <a href="{% url 'logout' %}" class="dropdown-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sign out
+        </a>
+      </div>
+    </div>
+  </nav>
 
-    <script>
-        const sidebar = document.getElementById('sidebar');
-        const openSidebar = document.getElementById('openSidebar');
-        const closeSidebar = document.getElementById('closeSidebar');
-        const mainContent = document.getElementById('mainContent');
-        const profilePic = document.getElementById('profilePic');
-        const profileDropdown = document.getElementById('profileDropdown');
-        const fileBtn = document.getElementById('fileBtn');
-        const fileInput = document.getElementById('fileInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const userInput = document.getElementById('userInput');
-        const chatBox = document.getElementById('chatBox');
-        const voiceBtn = document.getElementById('voiceBtn');
+  <div class="chat-box" id="chatBox">
+    <div class="welcome-state" id="welcomeState">
+      <div class="welcome-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="8.5" cy="16" r="1.5" fill="currentColor"/><circle cx="15.5" cy="16" r="1.5" fill="currentColor"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      </div>
+      <h2>How can I help you today?</h2>
+      <p>Ask me anything â€” coding, math, writing, analysis, and more.</p>
+    </div>
+  </div>
 
-        // CSRF token fetch
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-        const csrftoken = getCookie('csrftoken');
+  <div class="input-wrapper">
+    <input type="file" id="fileInput" hidden>
+    <div class="input-area">
+      <button class="input-icon-btn" id="fileBtn" title="Attach file">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.47"/></svg>
+      </button>
+      <button class="input-icon-btn" id="voiceBtn" title="Voice input">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+      </button>
+      <input type="text" id="userInput" placeholder="Message AI Chatâ€¦" autocomplete="off">
+      <button class="send-btn" id="sendBtn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+    <p class="input-hint">AI can make mistakes â€” verify important information.</p>
+  </div>
+</main>
 
-        // Sidebar toggle
-        openSidebar.onclick = () => {
-            sidebar.classList.add('open');
-            mainContent.classList.add('shifted');
-            openSidebar.style.display = "none";
-        };
-        closeSidebar.onclick = () => {
-            sidebar.classList.remove('open');
-            mainContent.classList.remove('shifted');
-            openSidebar.style.display = "block";
-        };
+<!-- SCRIPTS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 
-        // Profile dropdown toggle
-        profilePic.onclick = () => profileDropdown.classList.toggle('show');
+<script>
+// â”€â”€ CODE COPY â”€â”€
+function copyCode(btn) {
+  const code = btn.closest('.code-block-wrapper').querySelector('code').innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.classList.add('copied');
+    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy`;
+    }, 2000);
+  });
+}
 
-        // File upload handler
-        fileBtn.onclick = () => fileInput.click();
-        fileInput.onchange = () => {
-            const file = fileInput.files[0];
-            if (file) appendMessage(`📄 Sent: ${file.name}`, 'user');
-        };
+// â”€â”€ MARKED SETUP â”€â”€
+const renderer = new marked.Renderer();
+renderer.code = function(code, lang) {
+  const language = (lang && hljs.getLanguage(lang)) ? lang : 'plaintext';
+  const highlighted = hljs.highlight(code, { language, ignoreIllegals: true }).value;
+  const label = language === 'plaintext' ? 'text' : language;
+  return `<div class="code-block-wrapper">
+    <div class="code-block-header">
+      <span>${label}</span>
+      <button class="copy-code-btn" onclick="copyCode(this)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copy
+      </button>
+    </div>
+    <pre><code class="hljs language-${language}">${highlighted}</code></pre>
+  </div>`;
+};
+marked.setOptions({ renderer, breaks: true, gfm: true });
 
-        // Send message
-        sendBtn.onclick = sendMessage;
-        userInput.addEventListener("keypress", e => { if (e.key === "Enter") sendMessage(); });
+// â”€â”€ CSRF â”€â”€
+function getCookie(name) {
+  const m = document.cookie.match(new RegExp('(?:^|;)\\s*' + name + '=([^;]*)'));
+  return m ? decodeURIComponent(m[1]) : null;
+}
+const csrftoken = getCookie('csrftoken');
 
-        function appendMessage(msg, sender) {
-            const div = document.createElement("div");
-            div.classList.add("message", sender);
-            div.innerText = msg;
-            chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
+// â”€â”€ REFS â”€â”€
+const sidebar         = document.getElementById('sidebar');
+const mainContent     = document.getElementById('mainContent');
+const profileDropdown = document.getElementById('profileDropdown');
+const chatBox         = document.getElementById('chatBox');
+const userInput       = document.getElementById('userInput');
+const sendBtn         = document.getElementById('sendBtn');
+let   welcomeState    = document.getElementById('welcomeState');
 
-        function sendMessage() {
-            const msg = userInput.value.trim();
-            if (!msg) return;
-            appendMessage(msg, "user");
-            userInput.value = "";
+const BOT_SVG = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="8.5" cy="16" r="1" fill="currentColor"/><circle cx="15.5" cy="16" r="1" fill="currentColor"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`;
 
-            fetch('/get_response/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRFToken': csrftoken
-                },
-                body: new URLSearchParams({ 'message': msg })
-            })
-                .then(response => response.json())
-                .then(data => appendMessage(data.response, "bot"))
-                .catch(() => appendMessage("⚠️ Error connecting to server", "bot"));
-        }
+// â”€â”€ SIDEBAR â”€â”€
+document.getElementById('openSidebar').onclick = () => {
+  sidebar.classList.add('open'); mainContent.classList.add('shifted');
+  document.getElementById('openSidebar').style.display = 'none';
+};
+document.getElementById('closeSidebar').onclick = () => {
+  sidebar.classList.remove('open'); mainContent.classList.remove('shifted');
+  document.getElementById('openSidebar').style.display = '';
+};
 
-        // Voice input
-        voiceBtn.onclick = () => {
-            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            recognition.lang = "en-US";
-            recognition.onresult = e => {
-                const text = e.results[0][0].transcript;
-                userInput.value = text;
-                sendMessage();
-            };
-            recognition.start();
-        };
-        // --- New Chat Button ---
-        document.getElementById('newChat').onclick = () => {
-            chatBox.innerHTML = "";  // Clear current chat
-            appendMessage("🆕 New chat started.", "bot");
-        };
+// â”€â”€ PROFILE â”€â”€
+document.getElementById('profileBtn').onclick = e => { e.stopPropagation(); profileDropdown.classList.toggle('show'); };
+document.addEventListener('click', () => profileDropdown.classList.remove('show'));
 
-        // --- Saved Chats Button ---
-        document.querySelector('.sidebar-menu a').onclick = (e) => {
-            e.preventDefault();
-            fetch('/saved_chats/')
-                .then(res => res.json())
-                .then(data => {
-                    chatBox.innerHTML = ""; // Clear chat box
-                    if (data.chats.length === 0) {
-                        appendMessage("No saved chats found.", "bot");
-                    } else {
-                        data.chats.forEach(chat => {
-                            appendMessage(`💬 ${chat.message}`, "user");
-                            appendMessage(`🤖 ${chat.response}`, "bot");
-                        });
-                    }
-                })
-                .catch(() => appendMessage("Error loading saved chats.", "bot"));
-        };
-        function loadSavedChats() {
-            fetch("/get_saved_chats/")
-                .then(res => res.json())
-                .then(data => {
-                    if (data.error) {
-                        alert("Error: " + data.error);
-                        return;
-                    }
-                    const savedChatsContainer = document.getElementById("saved-chats");
-                    savedChatsContainer.innerHTML = "";
-                    data.chats.forEach(chat => {
-                        const chatItem = document.createElement("div");
-                        chatItem.classList.add("chat-item");
-                        chatItem.innerHTML = `
-          <p><strong>You:</strong> ${chat.user_message}</p>
-          <p><strong>Bot:</strong> ${chat.bot_reply}</p>
-        `;
-                        savedChatsContainer.appendChild(chatItem);
-                    });
-                })
-                .catch(err => alert("Error loading saved chats: " + err));
-        }
+// â”€â”€ HELPERS â”€â”€
+function removeWelcome() { if (welcomeState) { welcomeState.remove(); welcomeState = null; } }
 
-    </script>
+function appendUserMessage(text) {
+  removeWelcome();
+  const row = document.createElement('div'); row.className = 'message-row user-row';
+  const av  = document.createElement('div'); av.className  = 'avatar user-avatar';
+  av.innerHTML = `<img src="https://api.dicebear.com/7.x/initials/svg?seed={{ user.username }}&backgroundColor=0d1210&textColor=79b891" alt="">`;
+  const wrap = document.createElement('div'); wrap.className = 'bubble-wrap';
+  const snd  = document.createElement('span'); snd.className = 'bubble-sender'; snd.textContent = '{{ user.username }}';
+  const bbl  = document.createElement('div'); bbl.className  = 'bubble user-bubble';
+  bbl.textContent = text;  // textContent = XSS-safe
+  wrap.append(snd, bbl); row.append(av, wrap); chatBox.appendChild(row);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function appendBotMessage(text) {
+  const row = document.createElement('div'); row.className = 'message-row bot-row';
+  const av  = document.createElement('div'); av.className  = 'avatar bot-avatar'; av.innerHTML = BOT_SVG;
+  const wrap = document.createElement('div'); wrap.className = 'bubble-wrap';
+  const snd  = document.createElement('span'); snd.className = 'bubble-sender'; snd.textContent = 'AI Chat';
+  const bbl  = document.createElement('div'); bbl.className  = 'bubble bot-bubble';
+  bbl.innerHTML = marked.parse(text);
+  if (window.renderMathInElement) {
+    renderMathInElement(bbl, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true  },
+        { left: '$',  right: '$',  display: false },
+        { left: '\\(', right: '\\)', display: false },
+        { left: '\\[', right: '\\]', display: true  }
+      ], throwOnError: false
+    });
+  }
+  wrap.append(snd, bbl); row.append(av, wrap); chatBox.appendChild(row);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function showTyping() {
+  const row = document.createElement('div'); row.className = 'typing-row';
+  const av  = document.createElement('div'); av.className  = 'avatar bot-avatar'; av.innerHTML = BOT_SVG;
+  const bbl = document.createElement('div'); bbl.className = 'typing-bubble';
+  bbl.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+  row.append(av, bbl); chatBox.appendChild(row);
+  chatBox.scrollTop = chatBox.scrollHeight;
+  return row;
+}
+
+// â”€â”€ SEND â”€â”€
+sendBtn.onclick = sendMessage;
+userInput.addEventListener('keypress', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+
+function sendMessage() {
+  const msg = userInput.value.trim(); if (!msg) return;
+  appendUserMessage(msg); userInput.value = ''; sendBtn.disabled = true;
+  const tr = showTyping();
+  fetch('/get_response/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrftoken },
+    body: new URLSearchParams({ message: msg })
+  })
+  .then(r => r.json())
+  .then(d => { tr.remove(); appendBotMessage(d.response || 'Sorry, could not generate a response.'); })
+  .catch(() => { tr.remove(); appendBotMessage('**Error:** Could not connect to the server. Please try again.'); })
+  .finally(() => { sendBtn.disabled = false; });
+}
+
+// â”€â”€ FILE â”€â”€
+document.getElementById('fileBtn').onclick = () => document.getElementById('fileInput').click();
+document.getElementById('fileInput').onchange = function() {
+  if (this.files[0]) appendUserMessage('Attached: ' + this.files[0].name);
+};
+
+// â”€â”€ VOICE â”€â”€
+document.getElementById('voiceBtn').onclick = () => {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { appendBotMessage('Voice input is not supported in this browser.'); return; }
+  const rec = new SR(); rec.lang = 'en-US';
+  const vb = document.getElementById('voiceBtn');
+  rec.onstart  = () => { vb.style.color = 'var(--green-text)'; };
+  rec.onresult = e => { userInput.value = e.results[0][0].transcript; sendMessage(); };
+  rec.onend    = () => { vb.style.color = ''; };
+  rec.start();
+};
+
+// â”€â”€ NEW CHAT â”€â”€
+document.getElementById('newChatBtn').onclick = () => {
+  chatBox.innerHTML = '';
+  const ws = document.createElement('div'); ws.className = 'welcome-state'; ws.id = 'welcomeState';
+  ws.innerHTML = `<div class="welcome-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="8.5" cy="16" r="1.5" fill="currentColor"/><circle cx="15.5" cy="16" r="1.5" fill="currentColor"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div><h2>How can I help you today?</h2><p>Ask me anything â€” coding, math, writing, analysis, and more.</p>`;
+  chatBox.appendChild(ws); welcomeState = ws;
+};
+
+// â”€â”€ SAVED CHATS â”€â”€
+document.getElementById('savedChatsBtn').onclick = () => {
+  removeWelcome(); chatBox.innerHTML = '';
+  fetch('/saved_chats/').then(r => r.json()).then(data => {
+    if (!data.chats || data.chats.length === 0) { appendBotMessage('No saved chats found.'); return; }
+    data.chats.forEach(c => { appendUserMessage(c.user_message); appendBotMessage(c.bot_response); });
+  }).catch(() => appendBotMessage('**Error:** Could not load saved chats.'));
+};
+</script>
 </body>
-
 </html>
